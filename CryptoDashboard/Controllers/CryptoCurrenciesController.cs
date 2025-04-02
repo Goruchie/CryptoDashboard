@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CryptoDashboard.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using CryptoDashboard.Context;
 
 namespace CryptoDashboard.Controllers
 {
@@ -7,6 +10,13 @@ namespace CryptoDashboard.Controllers
     [ApiController]
     public class CryptoCurrenciesController : ControllerBase
     {
+        private readonly AppDbContext _context;
+        public CryptoCurrenciesController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+
         [HttpGet("prices")]
         public async Task<IActionResult> GetCryptoPrices()
         {
@@ -21,6 +31,14 @@ namespace CryptoDashboard.Controllers
                 return StatusCode((int)response.StatusCode, "Error fetching data from CoinGecko.");
             }
         }
+        [HttpPost("add-cryptocurrency")]
+        public async Task<IActionResult> AddCryptocurrency([FromBody] CryptoCurrency cryptocurrency)
+        {
+            _context.CryptoCurrencies.Add(cryptocurrency);
+            await _context.SaveChangesAsync();
+            return Ok("Cryptocurrency added successfully!");
+        }
+
 
     }
 }
