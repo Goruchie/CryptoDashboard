@@ -53,35 +53,31 @@ namespace CryptoDashboard.Controllers
         {
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd");
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "CryptoDashboardApp/1.0");
+
+                var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum&order=market_cap_desc&per_page=100&page=1&sparkline=false");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
 
-                    var prices = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, decimal>>>(content);
+                    var document = System.Text.Json.JsonDocument.Parse(content);
+                    var jsonArray = document.RootElement.EnumerateArray();
 
-                    if (prices != null)
+                    foreach (var price in jsonArray)
                     {
-                        foreach (var price in prices)
+                        var cryptoPrice = new CryptoPrice
                         {
-                            var cryptoPrice = new CryptoPrice
-                            {
-                                CryptoCurrencyId = price.Key == "bitcoin" ? 1 : 2, 
-                                Date = DateTime.UtcNow,
-                                Price = price.Value["usd"],
-                                Volume = 0 
-                            };
+                            CryptoCurrencyId = price.GetProperty("id").GetString() == "bitcoin" ? 1 : 2,
+                            Date = DateTime.UtcNow,
+                            Price = price.GetProperty("current_price").GetDecimal(),
+                            Volume = price.GetProperty("total_volume").GetDecimal()
+                        };
 
-                            _context.CryptoPrices.Add(cryptoPrice);
-                        }
+                        _context.CryptoPrices.Add(cryptoPrice);
+                    }
 
-                        await _context.SaveChangesAsync();
-                        return Ok("Prices fetched and stored successfully!");
-                    }
-                    else
-                    {
-                        return BadRequest("Failed to deserialize the response or no data was returned.");
-                    }
+                    await _context.SaveChangesAsync();
+                    return Ok("Prices and volume fetched and stored successfully!");
                 }
                 else
                 {

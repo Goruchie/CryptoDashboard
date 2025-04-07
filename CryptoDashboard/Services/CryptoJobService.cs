@@ -1,5 +1,6 @@
 ﻿using CryptoDashboard.Context;
 using CryptoDashboard.Models;
+using System.Text.Json;
 
 namespace CryptoDashboard.Services
 {
@@ -12,51 +13,53 @@ namespace CryptoDashboard.Services
             _context = context;
         }
 
-        public void FetchAndStorePrices()
+        public async Task FetchAndStorePrices()
         {
             using (var httpClient = new HttpClient())
             {
                 try
                 {
+                    httpClient.DefaultRequestHeaders.Add("User-Agent", "CryptoDashboardApp/1.0");
 
-                    var response = httpClient
-                        .GetAsync("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd")
-                        .Result;
+                    var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum&order=market_cap_desc&per_page=100&page=1&sparkline=false");
+
+                    Console.WriteLine($"Response status: {response.StatusCode}");
 
                     if (response.IsSuccessStatusCode)
                     {
+                        var content = await response.Content.ReadAsStringAsync();
 
-                        var content = response.Content.ReadAsStringAsync().Result;
-                        var prices = System.Text.Json.JsonSerializer
-    .Deserialize<Dictionary<string, Dictionary<string, decimal>>>(content);
+                        Console.WriteLine($"Response content: {content}");
 
-                        if (prices != null)
+                        var document = JsonDocument.Parse(content);
+                        var jsonArray = document.RootElement.EnumerateArray();
+
+                        foreach (var price in jsonArray)
                         {
-                            foreach (var price in prices)
+                            try
                             {
                                 var cryptoPrice = new CryptoPrice
                                 {
-                                    CryptoCurrencyId = price.Key == "bitcoin" ? 1 : 2, 
+                                    CryptoCurrencyId = price.GetProperty("id").GetString() == "bitcoin" ? 1 : 2,
                                     Date = DateTime.UtcNow,
-                                    Price = price.Value["usd"],
-                                    Volume = 0 
+                                    Price = price.GetProperty("current_price").GetDecimal(),
+                                    Volume = price.GetProperty("total_volume").GetDecimal()
                                 };
 
-                                _context.CryptoPrices.Add(cryptoPrice); 
+                                _context.CryptoPrices.Add(cryptoPrice);
                             }
-
-                            _context.SaveChanges(); 
-                            Console.WriteLine("Prices fetched and stored successfully.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Failed to deserialize the response or no data was returned.");
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error processing crypto data: {ex.Message}");
+                            }
                         }
 
+                        await _context.SaveChangesAsync();
+                        Console.WriteLine("Prices and volume fetched and stored successfully.");
                     }
                     else
                     {
-                        Console.WriteLine($"Error while calling CoinGecko API: {response.StatusCode}");
+                        Console.WriteLine($"Failed to fetch data from CoinGecko. StatusCode: {response.StatusCode}");
                     }
                 }
                 catch (Exception ex)
@@ -65,6 +68,5 @@ namespace CryptoDashboard.Services
                 }
             }
         }
-
     }
 }
