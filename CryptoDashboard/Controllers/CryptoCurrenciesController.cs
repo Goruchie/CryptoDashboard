@@ -57,26 +57,36 @@ namespace CryptoDashboard.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
+
                     var prices = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, decimal>>>(content);
 
-                    foreach (var price in prices)
+                    if (prices != null)
                     {
-                        var cryptoPrice = new CryptoPrice
+                        foreach (var price in prices)
                         {
-                            CryptoCurrencyId = price.Key == "bitcoin" ? 1 : 2,
-                            Date = DateTime.UtcNow,
-                            Price = price.Value["usd"],
-                            Volume = 0 
-                        };
+                            var cryptoPrice = new CryptoPrice
+                            {
+                                CryptoCurrencyId = price.Key == "bitcoin" ? 1 : 2, 
+                                Date = DateTime.UtcNow,
+                                Price = price.Value["usd"],
+                                Volume = 0 
+                            };
 
-                        _context.CryptoPrices.Add(cryptoPrice);
+                            _context.CryptoPrices.Add(cryptoPrice);
+                        }
+
+                        await _context.SaveChangesAsync();
+                        return Ok("Prices fetched and stored successfully!");
                     }
-
-                    await _context.SaveChangesAsync();
-                    return Ok("Prices fetched and stored successfully!");
+                    else
+                    {
+                        return BadRequest("Failed to deserialize the response or no data was returned.");
+                    }
                 }
-
-                return StatusCode((int)response.StatusCode, "Error fetching data from CoinGecko.");
+                else
+                {
+                    return StatusCode((int)response.StatusCode, "Failed to fetch data from CoinGecko.");
+                }
             }
         }
         [HttpGet("average-price/{id}")]
