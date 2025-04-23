@@ -1,8 +1,11 @@
-using CryptoDashboard.Context; 
-using CryptoDashboard.Services; 
-using Hangfire; 
-using Microsoft.EntityFrameworkCore; 
-using Microsoft.Extensions.Configuration; 
+using CryptoDashboard.Context;
+using CryptoDashboard.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Connections;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
@@ -10,7 +13,7 @@ builder.WebHost.UseUrls("http://0.0.0.0:5000");
 var connectionString = builder.Configuration.GetConnectionString("Connection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
 
@@ -21,8 +24,19 @@ builder.Services.AddSwaggerGen();
 // Hangfire
 
 builder.Services.AddHangfire(config =>
-    config.UseSqlServerStorage(connectionString));
+{
+    config.UsePostgreSqlStorage(
+        connectionString,
+        new Hangfire.PostgreSql.PostgreSqlStorageOptions
+        {
+            SchemaName = "HangFire",
+            QueuePollInterval = TimeSpan.FromSeconds(15),
+            DistributedLockTimeout = TimeSpan.FromMinutes(3) 
+        });
+});
+
 builder.Services.AddHangfireServer();
+
 
 builder.Services.AddScoped<CryptoJobService>();
 
@@ -42,8 +56,8 @@ app.UseAuthorization();
 if (app.Environment.IsDevelopment())
 {
 }
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Controllers mapping
 app.MapControllers();
@@ -56,9 +70,9 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 // Create hangfire job
 RecurringJob.AddOrUpdate<CryptoJobService>(
-    "FetchCryptoPrices", 
-    service => service.FetchAndStorePrices(), 
-    "*/30 * * * *" 
+    "FetchCryptoPrices",
+    service => service.FetchAndStorePrices(),
+    "*/30 * * * *"
 );
 
 app.Run();

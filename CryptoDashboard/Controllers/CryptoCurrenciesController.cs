@@ -88,6 +88,9 @@ namespace CryptoDashboard.Controllers
         [HttpGet("average-price/{id}")]
         public async Task<IActionResult> GetAveragePrice(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
+            startDate = ConvertToUtc(startDate.Date); 
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1)); 
+
             var prices = await _context.CryptoPrices
                 .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
                 .ToListAsync();
@@ -101,9 +104,22 @@ namespace CryptoDashboard.Controllers
 
             return Ok(new { AveragePrice = averagePrice });
         }
+
+        private DateTime ConvertToUtc(DateTime dateTime)
+        {
+            if (dateTime.Kind == DateTimeKind.Unspecified)
+            {
+                return TimeZoneInfo.ConvertTimeToUtc(dateTime, TimeZoneInfo.Local);
+            }
+            return dateTime.ToUniversalTime();
+        }
+
         [HttpGet("max-price/{id}")]
         public async Task<IActionResult> GetMaxPrice(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
+            startDate = ConvertToUtc(startDate.Date); 
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1)); 
+
             var prices = await _context.CryptoPrices
                 .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
                 .ToListAsync();
@@ -117,12 +133,16 @@ namespace CryptoDashboard.Controllers
 
             return Ok(new { MaxPrice = maxPrice });
         }
+
         [HttpGet("historical-prices/{id}")]
         public async Task<IActionResult> GetHistoricalPrices(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
+            startDate = ConvertToUtc(startDate.Date); 
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1)); 
+
             var prices = await _context.CryptoPrices
                 .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
-                .OrderBy(p => p.Date)
+                .OrderBy(p => p.Date) 
                 .ToListAsync();
 
             if (!prices.Any())
@@ -132,5 +152,6 @@ namespace CryptoDashboard.Controllers
 
             return Ok(prices);
         }
+
     }
 }
