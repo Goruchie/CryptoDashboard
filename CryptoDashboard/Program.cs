@@ -10,7 +10,11 @@ using Microsoft.Extensions.Configuration;
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
-var connectionString = builder.Configuration.GetConnectionString("Connection");
+var environment = builder.Environment.EnvironmentName;
+
+var connectionString = environment == "Production"
+    ? Environment.GetEnvironmentVariable("CONNECTION_STRING")
+    : builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
