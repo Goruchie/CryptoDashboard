@@ -9,11 +9,11 @@ namespace CryptoDashboard.Models
         [Column("id")]
         public int Id { get; set; }
 
-        [Required]
+        
         [Column("name")]
-        public required string Name { get; set; }
-        [Required]
+        public  string Name { get; set; }
+      
         [Column("symbol")]
-        public required string Symbol { get; set; }
+        public  string Symbol { get; set; }
     }
 }

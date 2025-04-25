@@ -11,14 +11,14 @@ namespace CryptoDashboard.Models
         public int Id { get; set; }
         [Column("cryptocurrencyid")]
         public int CryptoCurrencyId { get; set; }
-        [Required]
+
         [Column("date", TypeName = "timestamp with time zone")]
-        public required DateTime Date { get; set; }
-        [Required]
+        public  DateTime Date { get; set; }
+
         [Column("price")]
-        public required decimal Price { get; set; }
-        [Required]
+        public  decimal Price { get; set; }
+
         [Column("volume")]
-        public required decimal Volume { get; set; }
+        public decimal Volume { get; set; }
     }
 }
