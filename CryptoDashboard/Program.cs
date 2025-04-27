@@ -76,7 +76,7 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 RecurringJob.AddOrUpdate<CryptoJobService>(
     "FetchCryptoPrices",
     service => service.FetchAndStorePrices(),
-    "0 */2 * * *"
+    "0 0 * * *"
 );
 
 app.Run();
