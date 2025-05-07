@@ -17,12 +17,12 @@ namespace CryptoDashboard.Controllers
         }
 
 
-        [HttpGet("prices")]
+        [HttpGet("prices-volumes")]
         public async Task<IActionResult> GetCryptoPrices()
         {
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd");
+                var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_market_cap=false&include_24hr_vol=true");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
