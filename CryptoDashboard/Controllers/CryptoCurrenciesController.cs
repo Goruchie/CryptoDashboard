@@ -26,11 +26,20 @@ namespace CryptoDashboard.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return Ok(content);
+                    var jsonData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, decimal>>>(content);
+
+                    var formattedData = new List<object>
+            {
+                new { Name = "Bitcoin", Symbol = "BTC", Price = jsonData["bitcoin"]["usd"], Volume = jsonData["bitcoin"]["usd_24h_vol"] },
+                new { Name = "Ethereum", Symbol = "ETH", Price = jsonData["ethereum"]["usd"], Volume = jsonData["ethereum"]["usd_24h_vol"] }
+            };
+
+                    return Ok(formattedData);
                 }
                 return StatusCode((int)response.StatusCode, "Error fetching data from CoinGecko.");
             }
         }
+
         [HttpPost("add-cryptocurrency")]
         public async Task<IActionResult> AddCryptocurrency([FromBody] CryptoCurrency cryptocurrency)
         {
@@ -88,8 +97,8 @@ namespace CryptoDashboard.Controllers
         [HttpGet("average-price/{id}")]
         public async Task<IActionResult> GetAveragePrice(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
-            startDate = ConvertToUtc(startDate.Date); 
-            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1)); 
+            startDate = ConvertToUtc(startDate.Date);
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1));
 
             var prices = await _context.CryptoPrices
                 .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
@@ -117,8 +126,8 @@ namespace CryptoDashboard.Controllers
         [HttpGet("max-price/{id}")]
         public async Task<IActionResult> GetMaxPrice(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
-            startDate = ConvertToUtc(startDate.Date); 
-            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1)); 
+            startDate = ConvertToUtc(startDate.Date);
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1));
 
             var prices = await _context.CryptoPrices
                 .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
@@ -137,12 +146,12 @@ namespace CryptoDashboard.Controllers
         [HttpGet("historical-prices/{id}")]
         public async Task<IActionResult> GetHistoricalPrices(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
-            startDate = ConvertToUtc(startDate.Date); 
-            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1)); 
+            startDate = ConvertToUtc(startDate.Date);
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1));
 
             var prices = await _context.CryptoPrices
                 .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
-                .OrderBy(p => p.Date) 
+                .OrderBy(p => p.Date)
                 .ToListAsync();
 
             if (!prices.Any())
