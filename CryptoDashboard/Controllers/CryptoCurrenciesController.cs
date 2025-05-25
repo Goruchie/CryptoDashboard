@@ -22,7 +22,7 @@ namespace CryptoDashboard.Controllers
         {
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_market_cap=false&include_24hr_vol=true");
+                var response = await httpClient.GetAsync("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum&order=market_cap_desc&per_page=2&page=1&sparkline=false");
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
@@ -111,7 +111,17 @@ namespace CryptoDashboard.Controllers
 
             var averagePrice = prices.Average(p => p.Price);
 
-            return Ok(new { AveragePrice = averagePrice });
+            var cryptoCurrency = await _context.CryptoCurrencies
+                .Where(c => c.Id == id)
+                .Select(c => new { c.Symbol })
+                .FirstOrDefaultAsync();
+
+            if (cryptoCurrency == null)
+            {
+                return NotFound("CryptoCurrency not found.");
+            }
+
+            return Ok(new { Symbol = cryptoCurrency.Symbol, AveragePrice = averagePrice });
         }
 
         private DateTime ConvertToUtc(DateTime dateTime)
@@ -140,7 +150,47 @@ namespace CryptoDashboard.Controllers
 
             var maxPrice = prices.Max(p => p.Price);
 
-            return Ok(new { MaxPrice = maxPrice });
+            var cryptoCurrency = await _context.CryptoCurrencies
+                .Where(c => c.Id == id)
+                .Select(c => new { c.Symbol })
+                .FirstOrDefaultAsync();
+
+            if (cryptoCurrency == null)
+            {
+                return NotFound("CryptoCurrency not found.");
+            }
+
+            return Ok(new { Symbol = cryptoCurrency.Symbol, MaxPrice = maxPrice });
+        }
+
+        [HttpGet("min-price/{id}")]
+        public async Task<IActionResult> GetMinPrice(int id, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            startDate = ConvertToUtc(startDate.Date);
+            endDate = ConvertToUtc(endDate.Date.AddDays(1).AddTicks(-1));
+
+            var prices = await _context.CryptoPrices
+                .Where(p => p.CryptoCurrencyId == id && p.Date >= startDate && p.Date <= endDate)
+                .ToListAsync();
+
+            if (!prices.Any())
+            {
+                return NotFound("No prices found for the specified criteria.");
+            }
+
+            var minPrice = prices.Min(p => p.Price);
+
+            var cryptoCurrency = await _context.CryptoCurrencies
+                .Where(c => c.Id == id)
+                .Select(c => new { c.Symbol })
+                .FirstOrDefaultAsync();
+
+            if (cryptoCurrency == null)
+            {
+                return NotFound("CryptoCurrency not found.");
+            }
+
+            return Ok(new { Symbol = cryptoCurrency.Symbol, MinPrice = minPrice });
         }
 
         [HttpGet("historical-prices/{id}")]
