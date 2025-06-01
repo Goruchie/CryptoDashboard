@@ -84,10 +84,10 @@ app.UseSwaggerUI();
 app.MapControllers();
 
 // Hangfire Dashboard
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
-{
-    Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
-});
+//app.UseHangfireDashboard("/hangfire", new DashboardOptions
+//{
+//    Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
+//});
 
 // Create hangfire job
 RecurringJob.AddOrUpdate<CryptoJobService>(
