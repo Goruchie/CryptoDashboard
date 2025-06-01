@@ -1,5 +1,6 @@
 ﻿using CryptoDashboard.Context;
 using CryptoDashboard.Models;
+using Hangfire;
 using System.Text.Json;
 
 namespace CryptoDashboard.Services
@@ -13,6 +14,7 @@ namespace CryptoDashboard.Services
             _context = context;
         }
 
+        [DisableConcurrentExecution(timeoutInSeconds: 600)]
         public async Task FetchAndStorePrices()
         {
             using (var httpClient = new HttpClient())
