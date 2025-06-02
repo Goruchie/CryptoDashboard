@@ -40,21 +40,20 @@ builder.Services.AddSwaggerGen();
 
 // Hangfire
 
-builder.Services.AddHangfireServer(options =>
-{
-    options.WorkerCount = 1;
-    options.ShutdownTimeout = TimeSpan.FromMinutes(5);
-});
-
-
 builder.Services.AddHangfire(config =>
 {
     config.UsePostgreSqlStorage(connectionString, new Hangfire.PostgreSql.PostgreSqlStorageOptions
     {
         SchemaName = "HangFire",
-        QueuePollInterval = TimeSpan.FromMinutes(10),
+        QueuePollInterval = TimeSpan.FromMinutes(30),
         DistributedLockTimeout = TimeSpan.FromMinutes(3)
     });
+});
+
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 1;
+    options.ShutdownTimeout = TimeSpan.FromMinutes(1);
 });
 
 
