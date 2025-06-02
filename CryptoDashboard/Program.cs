@@ -87,10 +87,10 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 
 //Hangfire Dashboard
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
-                                    {
-                                        Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
-                                    });
+//app.UseHangfireDashboard("/hangfire", new DashboardOptions
+//                                    {
+//                                        Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
+//                                    });
 
 //Create hangfire job
 using (var scope = app.Services.CreateScope())
