@@ -45,15 +45,14 @@ builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(connectionString, new Hangfire.PostgreSql.PostgreSqlStorageOptions
     {
         SchemaName = "HangFire",
-        QueuePollInterval = TimeSpan.FromMinutes(30),
-        DistributedLockTimeout = TimeSpan.FromMinutes(3)
+        QueuePollInterval = TimeSpan.FromMinutes(60),
     });
 });
 
 builder.Services.AddHangfireServer(options =>
 {
-    options.WorkerCount = 1;
-    options.ShutdownTimeout = TimeSpan.FromMinutes(1);
+    options.WorkerCount = 1; 
+    options.ShutdownTimeout = TimeSpan.FromMinutes(1); 
 });
 
 
@@ -95,10 +94,13 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+    recurringJobManager.RemoveIfExists("FetchCryptoPrices"); 
+
     recurringJobManager.AddOrUpdate(
         "FetchCryptoPrices",
         () => scope.ServiceProvider.GetRequiredService<CryptoJobService>().FetchAndStorePrices(),
-        "0 0 * * *"
+        "0 0 * * *" 
     );
 }
 
