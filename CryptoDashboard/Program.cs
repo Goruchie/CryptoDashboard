@@ -45,7 +45,7 @@ builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(connectionString, new Hangfire.PostgreSql.PostgreSqlStorageOptions
     {
         SchemaName = "HangFire",
-        QueuePollInterval = TimeSpan.FromMinutes(120)
+        QueuePollInterval = TimeSpan.FromMinutes(180)
     });
 });
 
