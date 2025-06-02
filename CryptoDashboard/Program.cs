@@ -40,23 +40,23 @@ builder.Services.AddSwaggerGen();
 
 // Hangfire
 
-//builder.Services.AddHangfire(config =>
-//{
-//    config.UsePostgreSqlStorage(connectionString, new Hangfire.PostgreSql.PostgreSqlStorageOptions
-//    {
-//        SchemaName = "HangFire",
-//        QueuePollInterval = TimeSpan.FromMinutes(60),
-//    });
-//});
+builder.Services.AddHangfire(config =>
+{
+    config.UsePostgreSqlStorage(connectionString, new Hangfire.PostgreSql.PostgreSqlStorageOptions
+    {
+        SchemaName = "HangFire",
+        QueuePollInterval = TimeSpan.FromMinutes(120)
+    });
+});
 
-//builder.Services.AddHangfireServer(options =>
-//{
-//    options.WorkerCount = 1; 
-//    options.ShutdownTimeout = TimeSpan.FromMinutes(1); 
-//});
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = 1;
+    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+});
 
 
-//builder.Services.AddScoped<CryptoJobService>();
+builder.Services.AddScoped<CryptoJobService>();
 
 // 
 
@@ -84,25 +84,19 @@ if (app.Environment.IsDevelopment())
 // Controllers mapping
 app.MapControllers();
 
-//Hangfire Dashboard
-//app.UseHangfireDashboard("/hangfire", new DashboardOptions
-//                                    {
-//                                        Authorization = new[] { new AllowAllDashboardAuthorizationFilter() }
-//                                    });
-
 //Create hangfire job
-//using (var scope = app.Services.CreateScope())
-//{
-//    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
 
-//    recurringJobManager.RemoveIfExists("FetchCryptoPrices"); 
+    recurringJobManager.RemoveIfExists("FetchCryptoPrices"); // ?? Eliminamos jobs en cola
 
-//    recurringJobManager.AddOrUpdate(
-//        "FetchCryptoPrices",
-//        () => scope.ServiceProvider.GetRequiredService<CryptoJobService>().FetchAndStorePrices(),
-//        "0 0 * * *" 
-//    );
-//}
+    recurringJobManager.AddOrUpdate(
+        "FetchCryptoPrices",
+        () => scope.ServiceProvider.GetRequiredService<CryptoJobService>().FetchAndStorePrices(),
+        "0 0 * * *" 
+    );
+}
 
 
 app.Run();
